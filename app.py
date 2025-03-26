@@ -1,31 +1,39 @@
-from flask import Flask, request, jsonify
-import cv2
-import numpy as np
+import time
+import requests
 import torch
-from PIL import Image
-import io
 
-app = Flask(__name__)
+def download_file(url, filename):
+    for attempt in range(5):  # Retry up to 5 times
+        try:
+            response = requests.get(url)
+            response.raise_for_status()  # Raise error if request fails
+            with open(filename, "wb") as f:
+                f.write(response.content)
+            print(f"Downloaded {filename}")
+            return
+        except requests.exceptions.RequestException as e:
+            print(f"Attempt {attempt+1} failed: {e}")
+            time.sleep(5)  # Wait 5 seconds before retrying
+    print("Failed to download file after 5 attempts.")
 
-# Load YOLOv5 model
-model = torch.hub.load("ultralytics/yolov5", "custom", path="yolov5s.pt", force_reload=True)
+# Example: Download model file if it's missing
+model_url = "https://your-download-link.com/best.pt"  # Replace with actual URL
+model_path = "best.pt"
 
-@app.route("/detect_currency", methods=["POST"])
-def detect_currency():
-    if "image" not in request.files:
-        return jsonify({"error": "No image uploaded"}), 400
+if not os.path.exists(model_path):
+    download_file(model_url, model_path)
 
-    # Read the image
-    file = request.files["image"]
-    image = Image.open(io.BytesIO(file.read()))
+# Load the model
+model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_path, force_reload=False)
 
-    # Run YOLO detection
-    results = model(image)
+import time
 
-    # Extract detected objects
-    detected_objects = results.pandas().xyxy[0].to_dict(orient="records")
-
-    return jsonify({"detected_currency": detected_objects})
-
-if __name__ == "__main__":
-    app.run(debug=True)
+for attempt in range(5):  # Retry up to 5 times
+    try:
+        response = requests.get("https://your-api-url.com")
+        response.raise_for_status()
+        data = response.json()
+        break  # Exit loop if successful
+    except requests.exceptions.RequestException as e:
+        print(f"Attempt {attempt+1} failed: {e}")
+        time.sleep(5)  # Wait 5 seconds before retrying
