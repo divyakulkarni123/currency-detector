@@ -37,3 +37,15 @@ for attempt in range(5):  # Retry up to 5 times
     except requests.exceptions.RequestException as e:
         print(f"Attempt {attempt+1} failed: {e}")
         time.sleep(5)  # Wait 5 seconds before retrying
+        
+import os
+import gdown
+
+file_id = "YOUR_FILE_ID"
+output = "best.pt"
+
+if not os.path.exists(output):
+    gdown.download(f"https://drive.google.com/uc?id={file_id}", output, quiet=False)
+
+model = torch.hub.load('ultralytics/yolov5', 'custom', path=output, force_reload=False)
+
